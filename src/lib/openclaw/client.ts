@@ -265,13 +265,13 @@ export class OpenClawClient extends EventEmitter {
               const scopes = ['operator.admin'];
 
               // Build device identity for the connect params
-              const clientId = 'cli';
+              const clientId = 'mission-control';
               let device: Record<string, unknown> | undefined;
               if (this.deviceIdentity) {
                 const payload = buildDeviceAuthPayload({
                   deviceId: this.deviceIdentity.deviceId,
                   clientId,
-                  clientMode: 'ui',
+                  clientMode: 'backend',
                   role,
                   scopes,
                   signedAtMs,
@@ -304,7 +304,7 @@ export class OpenClawClient extends EventEmitter {
                     id: clientId,
                     version: '1.0.1',
                     platform: process.platform || 'web',
-                    mode: 'ui',
+                    mode: 'backend',
                   },
                   auth: { token: this.token },
                   role,
