@@ -5,35 +5,37 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  deploy-backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy Backend to Railway
+        uses: railway/deploy-action@v2
         with:
-          node-version: '20'
-      
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      
-      - name: Configure Railway Auth
-        run: |
-          mkdir -p ~/.railway
-          echo '{"token":"${{ secrets.RAILWAY_TOKEN }}"}' > ~/.railway/config.json
-      
-      - name: List Railway Projects
-        run: npx -y railway project list
-      
-      - name: Deploy Backend
-        working-directory: ./backend
-        run: npx -y railway up --detach --service e534cadd-4425-4f3c-9374-5b30373b6ff1
-      
-      - name: Deploy Workers  
-        working-directory: ./backend
-        run: npx -y railway up --detach --service 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
-      
-      - name: Deploy Frontend
-        working-directory: ./frontend
-        run: npx -y railway up --detach --service fae8ec68-9e28-4c95-97ed-1a09f74f1f96
+          service: "e534cadd-4425-4f3c-9374-5b30373b6ff1"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  deploy-workers:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Workers to Railway
+        uses: railway/deploy-action@v2
+        with:
+          service: "448a2e6d-f4b8-4158-a3fe-68ab8bb2908f"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Frontend to Railway  
+        uses: railway/deploy-action@v2
+        with:
+          service: "fae8ec68-9e28-4c95-97ed-1a09f74f1f96"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
