@@ -169,3 +169,4 @@ uv run python scripts/export_openapi.py
   ```
 
 - If `DB_AUTO_MIGRATE=false`, the backend may use `create_all` instead of Alembic.
+# Railway deployment triggered Wed Feb 25 14:44:10 UTC 2026
