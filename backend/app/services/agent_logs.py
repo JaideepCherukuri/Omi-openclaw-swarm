@@ -96,7 +96,6 @@ class AgentLogsService:
         Returns:
             Number of new logs fetched
         """
-        import asyncio
         from websockets.exceptions import InvalidHandshake, WebSocketException
         
         # Get all gateways
@@ -106,23 +105,29 @@ class AgentLogsService:
         all_new_logs: list[AgentLogEntry] = []
         
         for gateway in gateways:
-            # Skip gateways with internal/inaccessible URLs
-            if not gateway.url or "railway.internal" in gateway.url:
-                logger.debug("Skipping gateway with internal URL: %s", gateway.url)
+            # Defensive: use getattr to handle schema drift
+            url_val = getattr(gateway, "url", None)
+            gateway_id = getattr(gateway, "id", "unknown")
+            token_val = getattr(gateway, "token", None)
+            allow_insecure_val = getattr(gateway, "allow_insecure_tls", False)
+            
+            # Skip gateways with missing or internal URLs
+            if not url_val or "railway.internal" in (url_val or ""):
+                logger.debug("Skipping gateway with internal/missing URL: %s", gateway_id)
                 continue
                 
             try:
                 # Get agents for this gateway
                 agents_result = await self.session.exec(
-                    select(Agent).where(col(Agent.gateway_id) == gateway.id)
+                    select(Agent).where(col(Agent.gateway_id) == gateway_id)
                 )
                 agents = agents_result.all()
                 
                 # Fetch logs from gateway
                 config = GatewayConfig(
-                    url=gateway.url,
-                    token=gateway.token,
-                    allow_insecure_tls=gateway.allow_insecure_tls,
+                    url=url_val,
+                    token=token_val,
+                    allow_insecure_tls=allow_insecure_val,
                     disable_device_pairing=True,
                 )
                 
@@ -141,30 +146,33 @@ class AgentLogsService:
                         for log_line in logs_response:
                             # Parse log line and match to agent
                             for agent in agents:
-                                if agent.openclaw_session_id and agent.openclaw_session_id in str(log_line):
+                                agent_session_id = getattr(agent, "openclaw_session_id", None)
+                                agent_id_val = getattr(agent, "id", "unknown")
+                                agent_name_val = getattr(agent, "name", "unknown")
+                                if agent_session_id and agent_session_id in str(log_line):
                                     entry = AgentLogEntry(
-                                        id=f"log-{gateway.id}-{hash(str(log_line))}",
+                                        id=f"log-{gateway_id}-{hash(str(log_line))}",
                                         timestamp=utcnow().isoformat(),
-                                        agent_id=str(agent.id),
-                                        agent_name=agent.name,
+                                        agent_id=str(agent_id_val),
+                                        agent_name=str(agent_name_val),
                                         level=self._parse_log_level(str(log_line)),
                                         message=str(log_line)[:500],
-                                        session_key=agent.openclaw_session_id,
+                                        session_key=agent_session_id,
                                     )
                                     all_new_logs.append(entry)
                                     break
                                             
                 except (asyncio.TimeoutError, OSError, ConnectionRefusedError, WebSocketException, InvalidHandshake) as conn_err:
-                    logger.debug("Gateway logs unavailable for %s: %s", gateway.id, type(conn_err).__name__)
+                    logger.debug("Gateway logs unavailable for %s: %s", gateway_id, type(conn_err).__name__)
                 except OpenClawGatewayError as e:
                     logger.warning(
                         "Failed to fetch logs from gateway %s: %s",
-                        gateway.id,
+                        gateway_id,
                         e
                     )
                     
             except Exception as e:
-                logger.error("Error fetching logs from gateway %s: %s", gateway.id, str(e)[:200])
+                logger.error("Error fetching logs from gateway %s: %s", gateway_id, str(e)[:200])
         
         # Also add agent heartbeat logs for agents without gateway logs
         agents_result = await self.session.exec(select(Agent))
@@ -172,20 +180,26 @@ class AgentLogsService:
         now = utcnow()
         
         for agent in agents:
-            if agent.status in ["online", "busy"]:
+            agent_status = getattr(agent, "status", None)
+            agent_id_val = getattr(agent, "id", None)
+            agent_name_val = getattr(agent, "name", "unknown")
+            agent_last_seen = getattr(agent, "last_seen_at", None)
+            agent_session_id = getattr(agent, "openclaw_session_id", None)
+            
+            if agent_status in ["online", "busy"]:
                 # Only add heartbeat if no recent log for this agent
-                recent_logs = [l for l in all_new_logs if l.agent_id == str(agent.id)]
+                recent_logs = [l for l in all_new_logs if l.agent_id == str(agent_id_val)]
                 if not recent_logs or not any(
                     l.message.startswith("Heartbeat") for l in recent_logs[-5:]
                 ):
                     log = AgentLogEntry(
-                        id=f"log-{now.timestamp()}-{agent.id}",
+                        id=f"log-{now.timestamp()}-{agent_id_val}",
                         timestamp=now.isoformat(),
-                        agent_id=str(agent.id),
-                        agent_name=agent.name,
+                        agent_id=str(agent_id_val),
+                        agent_name=str(agent_name_val),
                         level="info",
-                        message=f"Agent {agent.status}: last seen {agent.last_seen_at or 'never'}",
-                        session_key=agent.openclaw_session_id,
+                        message=f"Agent {agent_status}: last seen {agent_last_seen or 'never'}",
+                        session_key=agent_session_id,
                     )
                     all_new_logs.append(log)
         
@@ -248,6 +262,3 @@ def add_log_entry(entry: AgentLogEntry) -> None:
         for log in to_remove:
             if log in _global_log_buffer:
                 _global_log_buffer.remove(log)
-
-
-import asyncio
