@@ -174,14 +174,6 @@ function ActivityItem({ event }: { event: ActivityEventRead }) {
     task_updated: <Sparkles className="h-4 w-4 text-warning" />,
     comment_added: <MessageSquare className="h-4 w-4 text-accent-strong" />,
   };
-function ActivityItem({ event }: { event: ActivityEventRead }) {
-  const icons: Record<string, React.ReactNode> = {
-    task_created: <Plus className="h-4 w-4 text-success" />,
-    task_assigned: <User className="h-4 w-4 text-accent" />,
-    task_completed: <CheckCircle2 className="h-4 w-4 text-success" />,
-    task_updated: <Sparkles className="h-4 w-4 text-warning" />,
-    comment_added: <MessageSquare className="h-4 w-4 text-accent-strong" />,
-  };
 
   const timeAgo = (dateStr: string) => {
     const date = new Date(dateStr);
