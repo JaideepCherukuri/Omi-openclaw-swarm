@@ -138,6 +138,11 @@ class SessionHeartbeatService:
                 if not gateway.url:
                     continue
 
+                # Skip gateways with internal/inaccessible URLs
+                if "railway.internal" in gateway.url:
+                    logger.debug("Skipping gateway with internal URL: %s", gateway.url)
+                    continue
+
                 try:
                     gateway_result = await self._sync_gateway_sessions(gateway, session)
                     result.total_agents += gateway_result.total_agents

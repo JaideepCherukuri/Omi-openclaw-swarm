@@ -96,6 +96,9 @@ class AgentLogsService:
         Returns:
             Number of new logs fetched
         """
+        import asyncio
+        from websockets.exceptions import InvalidHandshake, WebSocketException
+        
         # Get all gateways
         result = await self.session.exec(select(Gateway))
         gateways = result.all()
@@ -103,6 +106,11 @@ class AgentLogsService:
         all_new_logs: list[AgentLogEntry] = []
         
         for gateway in gateways:
+            # Skip gateways with internal/inaccessible URLs
+            if not gateway.url or "railway.internal" in gateway.url:
+                logger.debug("Skipping gateway with internal URL: %s", gateway.url)
+                continue
+                
             try:
                 # Get agents for this gateway
                 agents_result = await self.session.exec(
@@ -119,11 +127,14 @@ class AgentLogsService:
                 )
                 
                 try:
-                    # Call logs.tail method
-                    logs_response = await openclaw_call(
-                        "logs.tail",
-                        {"lines": 100, "filter": "agent"},
-                        config=config,
+                    # Call logs.tail method with connection timeout
+                    logs_response = await asyncio.wait_for(
+                        openclaw_call(
+                            "logs.tail",
+                            {"lines": 100, "filter": "agent"},
+                            config=config,
+                        ),
+                        timeout=5.0
                     )
                     
                     if isinstance(logs_response, list):
@@ -142,7 +153,9 @@ class AgentLogsService:
                                     )
                                     all_new_logs.append(entry)
                                     break
-                                    
+                                            
+                except (asyncio.TimeoutError, OSError, ConnectionRefusedError, WebSocketException, InvalidHandshake) as conn_err:
+                    logger.debug("Gateway logs unavailable for %s: %s", gateway.id, type(conn_err).__name__)
                 except OpenClawGatewayError as e:
                     logger.warning(
                         "Failed to fetch logs from gateway %s: %s",
@@ -151,7 +164,7 @@ class AgentLogsService:
                     )
                     
             except Exception as e:
-                logger.error("Error fetching logs from gateway: %s", e)
+                logger.error("Error fetching logs from gateway %s: %s", gateway.id, str(e)[:200])
         
         # Also add agent heartbeat logs for agents without gateway logs
         agents_result = await self.session.exec(select(Agent))
