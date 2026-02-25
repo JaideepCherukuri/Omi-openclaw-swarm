@@ -49,5 +49,5 @@ COPY backend/templates ./templates
 # Default API port - Railway sets PORT env var
 EXPOSE 8000
 
-# Run the API - use PORT env var if set, otherwise 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run the API - Railway will override with startCommand from railway.toml
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
