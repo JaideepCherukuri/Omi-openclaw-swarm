@@ -10,20 +10,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install Railway CLI
-        run: curl -s https://railway.app/install.sh | bash
-      
-      - name: Deploy Backend
-        run: railway up --service e534cadd-4425-4f3c-9374-5b30373b6ff1
+      - name: Deploy via Railway API
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-      
-      - name: Deploy Frontend  
-        run: railway up --service fae8ec68-9e28-4c95-97ed-1a09f74f1f96
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-      
-      - name: Deploy Workers
-        run: railway up --service 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Install Railway CLI
+          npm install -g @railway/cli
+          
+          # Link to project and deploy each service
+          railway link --project c6a9d92e-4343-4545-9efc-a80a488abb0d
+          
+          # Deploy Backend
+          cd backend && railway up --service e534cadd-4425-4f3c-9374-5b30373b6ff1 --detach
+          cd ..
+          
+          # Deploy Frontend  
+          cd frontend && railway up --service fae8ec68-9e28-4c95-97ed-1a09f74f1f96 --detach
+          cd ..
+          
+          # Deploy Workers
+          cd backend && railway up --service 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f --detach
