@@ -10,9 +10,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy with Railway CLI
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+      
+      - name: Deploy Backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          curl -fsSL https://railway.app/install.sh | sh
           export PATH="$HOME/.railway/bin:$PATH"
-          railway login --token "${{ secrets.RAILWAY_TOKEN }}"
           cd backend && railway up --detach --service "e534cadd-4425-4f3c-9374-5b30373b6ff1"
+      
+      - name: Deploy Workers
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          export PATH="$HOME/.railway/bin:$PATH"
+          cd backend && railway up --detach --service "448a2e6d-f4b8-4158-a3fe-68ab8bb2908f"
+      
+      - name: Deploy Frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          export PATH="$HOME/.railway/bin:$PATH"
+          cd frontend && railway up --detach --service "fae8ec68-9e28-4c95-97ed-1a09f74f1f96"
