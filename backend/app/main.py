@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -461,9 +462,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     agent_logs_running = False
     
     try:
-        async with async_session_maker() as session:
-            heartbeat_service = await start_heartbeat_service(session)
-            logger.info("app.lifecycle.heartbeat_service.started")
+        heartbeat_service = await start_heartbeat_service(async_session_maker)
+        logger.info("app.lifecycle.heartbeat_service.started")
     except Exception as exc:
         logger.warning("app.lifecycle.heartbeat_service.start_failed error=%s", str(exc))
     

@@ -72,10 +72,10 @@ class SessionHeartbeatService:
 
     def __init__(
         self,
-        session: AsyncSession,
+        session_factory: callable,
         poll_interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS,
     ) -> None:
-        self.session = session
+        self.session_factory = session_factory
         self.poll_interval = poll_interval_seconds
         self._running = False
         self._task: asyncio.Task | None = None
@@ -129,38 +129,39 @@ class SessionHeartbeatService:
         """Sync agent status for all gateways."""
         result = SyncResult()
 
-        # Get all gateways
-        gateways_result = await self.session.exec(select(Gateway))
-        gateways = gateways_result.all()
+        async with self.session_factory() as session:
+            # Get all gateways
+            gateways_result = await session.exec(select(Gateway))
+            gateways = gateways_result.all()
 
-        for gateway in gateways:
-            if not gateway.url:
-                continue
+            for gateway in gateways:
+                if not gateway.url:
+                    continue
 
-            try:
-                gateway_result = await self._sync_gateway_sessions(gateway)
-                result.total_agents += gateway_result.total_agents
-                result.updated_online += gateway_result.updated_online
-                result.updated_offline += gateway_result.updated_offline
-                result.updated_provisioning += gateway_result.updated_provisioning
-            except OpenClawGatewayError as exc:
-                logger.warning(
-                    "session_heartbeat_service.gateway_error gateway_id=%s error=%s",
-                    gateway.id,
-                    str(exc),
-                )
-                result.gateway_errors += 1
-            except Exception as exc:
-                logger.error(
-                    "session_heartbeat_service.sync_error gateway_id=%s error=%s",
-                    gateway.id,
-                    str(exc),
-                )
-                result.errors += 1
+                try:
+                    gateway_result = await self._sync_gateway_sessions(gateway, session)
+                    result.total_agents += gateway_result.total_agents
+                    result.updated_online += gateway_result.updated_online
+                    result.updated_offline += gateway_result.updated_offline
+                    result.updated_provisioning += gateway_result.updated_provisioning
+                except OpenClawGatewayError as exc:
+                    logger.warning(
+                        "session_heartbeat_service.gateway_error gateway_id=%s error=%s",
+                        gateway.id,
+                        str(exc),
+                    )
+                    result.gateway_errors += 1
+                except Exception as exc:
+                    logger.error(
+                        "session_heartbeat_service.sync_error gateway_id=%s error=%s",
+                        gateway.id,
+                        str(exc),
+                    )
+                    result.errors += 1
 
         return result
 
-    async def _sync_gateway_sessions(self, gateway: Gateway) -> SyncResult:
+    async def _sync_gateway_sessions(self, gateway: Gateway, session: AsyncSession) -> SyncResult:
         """Sync agent status for a specific gateway."""
         result = SyncResult()
 
@@ -200,7 +201,7 @@ class SessionHeartbeatService:
                     )
 
         # Get all agents for this gateway
-        agents = await Agent.objects.filter_by(gateway_id=gateway.id).all(self.session)
+        agents = await Agent.objects.filter_by(gateway_id=gateway.id).all(session)
         result.total_agents = len(agents)
 
         now = utcnow()
@@ -231,7 +232,7 @@ class SessionHeartbeatService:
             if new_status != old_status:
                 agent.status = new_status
                 agent.updated_at = now
-                self.session.add(agent)
+                session.add(agent)
 
                 if new_status == "online":
                     result.updated_online += 1
@@ -249,7 +250,7 @@ class SessionHeartbeatService:
                     new_status,
                 )
 
-        await self.session.commit()
+        await session.commit()
 
         # Also update gateway main agent
         main_session_key = GatewayAgentIdentity.session_key(gateway)
@@ -257,7 +258,7 @@ class SessionHeartbeatService:
             main_agent = await Agent.objects.filter_by(
                 gateway_id=gateway.id,
                 board_id=None,
-            ).first(self.session)
+            ).first(session)
 
             if main_agent:
                 old_status = main_agent.status
@@ -274,8 +275,8 @@ class SessionHeartbeatService:
                 if new_status != old_status:
                     main_agent.status = new_status
                     main_agent.updated_at = now
-                    self.session.add(main_agent)
-                    await self.session.commit()
+                    session.add(main_agent)
+                    await session.commit()
 
                     logger.info(
                         "session_heartbeat_service.main_agent_updated "
@@ -377,17 +378,23 @@ class SessionHeartbeatService:
 _service_instance: SessionHeartbeatService | None = None
 
 
-def get_heartbeat_service(session: AsyncSession) -> SessionHeartbeatService:
+def get_heartbeat_service(
+    session_factory: callable,
+    poll_interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS,
+) -> SessionHeartbeatService:
     """Get or create the heartbeat service instance."""
     global _service_instance
     if _service_instance is None:
-        _service_instance = SessionHeartbeatService(session)
+        _service_instance = SessionHeartbeatService(session_factory, poll_interval_seconds)
     return _service_instance
 
 
-async def start_heartbeat_service(session: AsyncSession) -> SessionHeartbeatService:
+async def start_heartbeat_service(
+    session_factory: callable,
+    poll_interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS,
+) -> SessionHeartbeatService:
     """Initialize and start the global heartbeat service."""
-    service = get_heartbeat_service(session)
+    service = get_heartbeat_service(session_factory, poll_interval_seconds)
     if not service._running:
         await service.start()
     return service
