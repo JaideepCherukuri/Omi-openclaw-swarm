@@ -4,13 +4,11 @@ on:
   push:
     branches: [main]
 
-concurrency:
-  group: railway-deploy
-  cancel-in-progress: true
-
 jobs:
-  deploy-all:
+  deploy:
     runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       
@@ -23,22 +21,19 @@ jobs:
         run: npm install -g @railway/cli
       
       - name: Deploy Backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        working-directory: ./backend
         run: |
-          cd backend
-          railway up -d -s e534cadd-4425-4f3c-9374-5b30373b6ff1
+          railway link --project c6a9d92e-4343-4545-9efc-a80a488abb0d
+          railway up --detach
       
-      - name: Deploy Workers
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Deploy Workers  
+        working-directory: ./backend
         run: |
-          cd backend
-          railway up -d -s 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
+          railway link --project c6a9d92e-4343-4545-9efc-a80a488abb0d
+          railway up --detach
       
       - name: Deploy Frontend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        working-directory: ./frontend
         run: |
-          cd frontend
-          railway up -d -s fae8ec68-9e28-4c95-97ed-1a09f74f1f96
+          railway link --project c6a9d92e-4343-4545-9efc-a80a488abb0d
+          railway up --detach
