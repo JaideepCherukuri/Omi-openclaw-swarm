@@ -16,8 +16,7 @@ jobs:
       - name: Configure Railway
         run: |
           export PATH="$HOME/.railway/bin:$PATH"
-          # Login with token non-interactively
-          echo "${{ secrets.RAILWAY_TOKEN }}" | railway login --token-stdin
+          railway login --token "${{ secrets.RAILWAY_TOKEN }}"
       
       - name: Deploy Backend
         working-directory: ./backend
