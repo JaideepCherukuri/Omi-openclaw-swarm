@@ -15,7 +15,6 @@ import { BrandMark } from "@/components/atoms/BrandMark";
 import { OrgSwitcher } from "@/components/organisms/OrgSwitcher";
 import { UserMenu } from "@/components/organisms/UserMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { SerayahChat } from "@/components/serayah/SerayahChat";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { Menu, X, BarChart3, Activity, Folder, LayoutGrid, Tags, CheckCircle2, Settings, Store, Boxes, Building2, Network, Bot, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -157,9 +156,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </div>
       
       {/* Serayah AI Chat - only shown when signed in */}
-      <SignedIn>
-        <SerayahChat />
-      </SignedIn>
     </div>
   );
 }
@@ -183,10 +179,6 @@ function MobileNavigation({ pathname, onClose }: { pathname: string; onClose: ()
               <MobileNavLink href="/dashboard" pathname={pathname} onClick={onClose}>
                 <BarChart3 className="h-4 w-4" />
                 Dashboard
-              </MobileNavLink>
-              <MobileNavLink href="/dashboard/serayah" pathname={pathname} onClick={onClose}>
-                <Crown className="h-4 w-4" />
-                Serayah
               </MobileNavLink>
               <MobileNavLink href="/activity" pathname={pathname} onClick={onClose}>
                 <Activity className="h-4 w-4" />
