@@ -10,9 +10,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
       - name: Deploy to Railway
-        uses: railway/deploy-action@v2
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          project_id: c6a9d92e-4343-4545-9efc-a80a488abb0d
-          environment: production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service backend
+      
+      - name: Deploy Frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        working-directory: frontend
+        run: railway up --service frontend
+      
+      - name: Deploy Workers
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        working-directory: backend
+        run: railway up --service workers
