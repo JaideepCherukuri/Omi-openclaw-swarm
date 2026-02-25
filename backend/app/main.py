@@ -503,7 +503,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
                         if count > 0:
                             logger.debug("agent_logs.fetched count=%d", count)
                 except Exception as exc:
-                    logger.error("agent_logs.fetch_error error=%s", str(exc))
+                    import traceback
+                    logger.error("agent_logs.fetch_error error=%s traceback=%s", str(exc), traceback.format_exc()[-500:])
                 await asyncio.sleep(30)  # Fetch every 30 seconds
         
         agent_logs_task = asyncio.create_task(agent_logs_loop())
