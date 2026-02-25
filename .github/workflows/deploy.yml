@@ -13,23 +13,20 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
       
-      - name: Configure Railway Auth
-        run: |
-          mkdir -p ~/.railway
-          echo -e "token: \"${{ secrets.RAILWAY_TOKEN }}\"\nproject: c6a9d92e-4343-4545-9efc-a80a488abb0d" > ~/.railway/config.yaml
-          cat ~/.railway/config.yaml | sed 's/token: .*/token: ***/'
-      
       - name: Deploy Backend
-        run: |
-          cd backend
-          railway up --service e534cadd-4425-4f3c-9374-5b30373b6ff1
+        working-directory: ./backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service e534cadd-4425-4f3c-9374-5b30373b6ff1
       
       - name: Deploy Workers
-        run: |
-          cd backend
-          railway up --service 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
+        working-directory: ./backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
       
       - name: Deploy Frontend
-        run: |
-          cd frontend
-          railway up --service fae8ec68-9e28-4c95-97ed-1a09f74f1f96
+        working-directory: ./frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service fae8ec68-9e28-4c95-97ed-1a09f74f1f96
