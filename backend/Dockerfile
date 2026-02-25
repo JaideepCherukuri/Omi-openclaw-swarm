@@ -46,8 +46,8 @@ COPY backend/app ./app
 # In-repo these live at `backend/templates/`; runtime path is `/app/templates`.
 COPY backend/templates ./templates
 
-# Default API port
+# Default API port - Railway sets PORT env var
 EXPOSE 8000
 
-# Run the API
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the API - use PORT env var if set, otherwise 8000
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
