@@ -1,5 +1,5 @@
-[$.workers]
+[workers]
 dockerfilePath = "backend/Dockerfile.worker"
 
-[[$.workers.deploy]]
+[[workers.deploy]]
 startCommand = "./start-worker.sh"
