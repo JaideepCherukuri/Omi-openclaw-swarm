@@ -1,0 +1,20 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+numReplicas = 1
+
+[[services]]
+name = "worker"
+
+[services.build]
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile.worker"
+
+[services.deploy]
+startCommand = "bash start-worker.sh"
+numReplicas = 1

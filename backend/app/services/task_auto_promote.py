@@ -30,9 +30,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Auto-promote settings
-MAX_CLAIMED_TASKS = 3
-
 
 class TaskAutoPromoteService:
     """Service for auto-promoting tasks from review to done."""
@@ -44,27 +41,33 @@ class TaskAutoPromoteService:
         """
         Run one auto-promote cycle.
         
-        Returns stats: {"promoted": int, "skipped": int}
+        Returns:
+            Dict with keys "promoted", "skipped", "errors"
         """
-        stats = {"promoted": 0, "skipped": 0}
-        
+        stats = {"promoted": 0, "skipped": 0, "errors": 0}
+
         # Get all tasks in review status
-        query = select(Task).where(
-            col(Task.status) == "review",
-            col(Task.assigned_agent_id).is_not(None),
-        )
-        result = await self.session.exec(query)
-        tasks = result.all()
-        
-        for task in tasks:
-            if await self._should_auto_promote_task(task):
-                task.status = "done"
-                stats["promoted"] += 1
-                logger.info("Task %s auto-promoted to done", task.id)
-            else:
-                stats["skipped"] += 1
-        
-        await self.session.commit()
+        tasks_in_review = list(await self.session.exec(
+            select(Task)
+            .where(col(Task.status) == "review")
+            .where(col(Task.assigned_agent_id).is_not(None))
+        ))
+
+        logger.info("Auto-promote cycle: checking %d tasks in review", len(tasks_in_review))
+
+        for task in tasks_in_review:
+            try:
+                should_promote = await self._should_auto_promote_task(task)
+                if should_promote:
+                    await self._promote_task(task)
+                    stats["promoted"] += 1
+                    logger.info("Auto-promoted task %s to done", task.id)
+                else:
+                    stats["skipped"] += 1
+            except Exception as e:
+                logger.error("Error auto-promoting task %s: %s", task.id, e)
+                stats["errors"] += 1
+
         return stats
 
     async def _should_auto_promote_task(self, task: Task) -> bool:
@@ -112,26 +115,76 @@ class TaskAutoPromoteService:
 
         return True
 
-    async def _has_pending_approvals(self, task_id: UUID) -> bool:
-        """Check if task has pending approvals."""
-        query = select(Approval).where(
-            col(Approval.task_id) == task_id,
-            col(Approval.status) == "pending"
-        )
-        result = await self.session.exec(query)
-        return len(list(result)) > 0
-
     def _get_time_in_review(self, task: Task) -> timedelta:
-        """Calculate time task has been in review."""
-        now = utcnow()
-        if task.claimed_at:
-            return now - task.claimed_at
-        elif task.updated_at:
-            return now - task.updated_at
-        return timedelta(0)
+        """
+        Estimate how long task has been in review.
+        
+        Uses task.updated_at as proxy for review entry time.
+        This works because updated_at is set when status changes.
+        """
+        # For accurate tracking, we'd need review_entered_at field
+        # For now, use updated_at as fallback
+        review_since = task.updated_at or task.in_progress_at or task.created_at
+        if review_since is None:
+            review_since = task.created_at or utcnow()
+        
+        return utcnow() - review_since
+
+    async def _has_pending_approvals(self, task_id: UUID) -> bool:
+        """Check if task has any linked approvals that are pending."""
+        pending = await self.session.exec(
+            select(Approval)
+            .where(col(Approval.task_id) == task_id)
+            .where(col(Approval.status) == "pending")
+            .limit(1)
+        )
+        return pending.first() is not None
+
+    async def _promote_task(self, task: Task) -> None:
+        """Promote task from review to done."""
+        previous_status = task.status
+        task.status = "done"
+        task.updated_at = utcnow()
+        self.session.add(task)
+
+        # Record activity
+        from app.services.activity_log import record_activity
+        record_activity(
+            self.session,
+            event_type="task.status_changed",
+            task_id=task.id,
+            message=f"Task auto-promoted from {previous_status} to done after review threshold",
+            agent_id=task.assigned_agent_id,
+        )
+        await self.session.commit()
 
 
+# Background task runner for asyncio/async context
 async def run_auto_promote_cycle(session: AsyncSession) -> dict[str, int]:
     """Convenience function to run one auto-promote cycle."""
     service = TaskAutoPromoteService(session)
     return await service.run_auto_promote_cycle()
+
+
+# Global service instance for background task
+_service_instance: TaskAutoPromoteService | None = None
+
+
+def get_task_auto_promote_service(session: AsyncSession) -> TaskAutoPromoteService:
+    """Get or create the task auto-promote service instance."""
+    global _service_instance
+    if _service_instance is None:
+        _service_instance = TaskAutoPromoteService(session)
+    return _service_instance
+
+
+async def start_task_auto_promote_service(session: AsyncSession) -> TaskAutoPromoteService:
+    """Initialize and start the global task auto-promote background service."""
+    service = get_task_auto_promote_service(session)
+    return service
+
+
+async def stop_task_auto_promote_service() -> None:
+    """Stop the global task auto-promote service."""
+    global _service_instance
+    _service_instance = None

@@ -235,3 +235,6 @@ def add_log_entry(entry: AgentLogEntry) -> None:
         for log in to_remove:
             if log in _global_log_buffer:
                 _global_log_buffer.remove(log)
+
+
+import asyncio
