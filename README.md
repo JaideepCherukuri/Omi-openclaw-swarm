@@ -146,3 +146,4 @@ This project is licensed under the MIT License. See [`LICENSE`](./LICENSE).
 
 [![Star History Chart](https://api.star-history.com/svg?repos=abhi1693/openclaw-mission-control&type=date&legend=top-left)](https://www.star-history.com/#abhi1693/openclaw-mission-control&type=date&legend=top-left)
 # Railway config updated Wed Feb 25 12:17:27 UTC 2026
+# Deploy trigger Wed Feb 25 15:52:15 UTC 2026
