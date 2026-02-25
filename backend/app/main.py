@@ -589,7 +589,11 @@ install_error_handling(app)
 )
 def health() -> HealthStatusResponse:
     """Lightweight liveness probe endpoint."""
-    return HealthStatusResponse(ok=True)
+    try:
+        return HealthStatusResponse(ok=True)
+    except Exception as e:
+        logger.error("health endpoint error: %s", e)
+        raise
 
 
 @app.get(
