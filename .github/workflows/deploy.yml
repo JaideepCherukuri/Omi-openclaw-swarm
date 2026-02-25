@@ -5,37 +5,14 @@ on:
     branches: [main]
 
 jobs:
-  deploy-backend:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy Backend to Railway
-        uses: railway/deploy-action@v2
-        with:
-          service: "e534cadd-4425-4f3c-9374-5b30373b6ff1"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-  deploy-workers:
-    runs-on: ubuntu-latest
-    needs: deploy-backend
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy Workers to Railway
-        uses: railway/deploy-action@v2
-        with:
-          service: "448a2e6d-f4b8-4158-a3fe-68ab8bb2908f"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    needs: deploy-backend
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy Frontend to Railway  
-        uses: railway/deploy-action@v2
-        with:
-          service: "fae8ec68-9e28-4c95-97ed-1a09f74f1f96"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      
+      - name: Deploy with Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          export PATH="$HOME/.railway/bin:$PATH"
+          railway login --token "${{ secrets.RAILWAY_TOKEN }}"
+          cd backend && railway up --detach --service "e534cadd-4425-4f3c-9374-5b30373b6ff1"
