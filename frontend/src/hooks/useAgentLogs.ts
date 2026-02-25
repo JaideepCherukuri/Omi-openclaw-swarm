@@ -46,11 +46,11 @@ const fetchAgentLogs = async (
     { method: "GET" }
   );
 
-  if (response.status !== 200) {
+  if (!response) {
     throw new Error("Failed to fetch agent logs");
   }
 
-  return response.data;
+  return response;
 };
 
 // React Query hook for enriched agent logs

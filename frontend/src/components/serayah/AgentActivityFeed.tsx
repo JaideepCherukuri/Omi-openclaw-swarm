@@ -240,7 +240,7 @@ function LogEntry({ log, expanded, onToggle }: { log: AgentLog; expanded: boolea
                   <LevelIcon className="h-3 w-3 mr-1" />
                   {levelCfg.label}
                 </Badge>
-                <Badge variant="secondary" className="text-[10px] h-5">
+                <Badge variant="default" className="text-[10px] h-5">
                   {eventConfig.label}
                 </Badge>
                 <TimeAgo timestamp={log.timestamp} />
@@ -313,8 +313,8 @@ export function AgentActivityFeed() {
           { method: "GET" }
         );
         
-        if (response.status === 200 && response.data?.logs) {
-          setLogs(response.data.logs);
+        if (response?.logs) {
+          setLogs(response.logs);
         }
       } catch (err) {
         console.error("Failed to fetch agent logs:", err);
@@ -329,16 +329,6 @@ export function AgentActivityFeed() {
   }, [filterAgent, filterLevel]);
 
   // Auto-refresh (poll every 10 seconds)
-  useEffect(() => {
-    if (isPaused) return;
-    
-    const interval = setInterval(() => {
-      fetchLogs();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [isPaused, filterAgent, filterLevel]);
-
   const filteredLogs = logs.filter((log) => {
     if (filterAgent && log.agent_id !== filterAgent) return false;
     if (filterLevel && log.level !== filterLevel) return false;
@@ -386,7 +376,7 @@ export function AgentActivityFeed() {
           </div>
           
           <Button
-            variant={filterAgent === null ? "default" : "outline"}
+            variant={filterAgent === null ? "secondary" : "outline"}
             size="sm"
             className="h-6 text-xs"
             onClick={() => setFilterAgent(null)}
@@ -400,7 +390,7 @@ export function AgentActivityFeed() {
             return (
               <Button
                 key={agentId}
-                variant={filterAgent === agentId ? "default" : "outline"}
+                variant={filterAgent === agentId ? "secondary" : "outline"}
                 size="sm"
                 className="h-6 text-xs"
                 onClick={() => setFilterAgent(filterAgent === agentId ? null : agentId)}
@@ -415,7 +405,7 @@ export function AgentActivityFeed() {
           {["info", "success", "warning", "error"].map((level) => (
             <Button
               key={level}
-              variant={filterLevel === level ? "default" : "outline"}
+              variant={filterLevel === level ? "secondary" : "outline"}
               size="sm"
               className={cn(
                 "h-6 text-xs capitalize",
