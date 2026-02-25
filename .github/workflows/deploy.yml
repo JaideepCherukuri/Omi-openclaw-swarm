@@ -18,20 +18,22 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
       
-      - name: Authenticate Railway
-        run: railway login --token "${{ secrets.RAILWAY_TOKEN }}"
+      - name: Configure Railway Auth
+        run: |
+          mkdir -p ~/.railway
+          echo '{"token":"${{ secrets.RAILWAY_TOKEN }}"}' > ~/.railway/config.json
       
-      - name: List Projects
-        run: railway project list
+      - name: List Railway Projects
+        run: npx -y railway project list
       
       - name: Deploy Backend
         working-directory: ./backend
-        run: railway up -d -s e534cadd-4425-4f3c-9374-5b30373b6ff1
+        run: npx -y railway up --detach --service e534cadd-4425-4f3c-9374-5b30373b6ff1
       
       - name: Deploy Workers  
         working-directory: ./backend
-        run: railway up -d -s 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
+        run: npx -y railway up --detach --service 448a2e6d-f4b8-4158-a3fe-68ab8bb2908f
       
       - name: Deploy Frontend
         working-directory: ./frontend
-        run: railway up -d -s fae8ec68-9e28-4c95-97ed-1a09f74f1f96
+        run: npx -y railway up --detach --service fae8ec68-9e28-4c95-97ed-1a09f74f1f96
