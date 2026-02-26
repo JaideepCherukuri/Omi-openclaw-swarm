@@ -4,14 +4,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Send, Crown, Loader2, Activity, Bot, CheckCircle2, Clock, AlertCircle, RefreshCcw, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SerayahMessage {
+interface OmiMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
 }
 
-interface SerayahStatus {
+interface OmiStatus {
   status: "online" | "offline" | "busy" | "working";
   currentTask?: {
     id: string;
@@ -34,12 +34,12 @@ const POLL_INTERVAL = 10000; // 10 seconds
 const MESSAGE_POLL_INTERVAL = 5000; // 5 seconds for messages in poll mode
 const MAX_WS_RECONNECT_ATTEMPTS = 3;
 
-export function SerayahChat() {
+export function OmiChat() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<SerayahMessage[]>([]);
+  const [messages, setMessages] = useState<OmiMessage[]>([]);
   const [input, setInput] = useState("");
   const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
-  const [serayahStatus, setSerayahStatus] = useState<SerayahStatus>({ status: "offline" });
+  const [omiStatus, setOmiStatus] = useState<OmiStatus>({ status: "offline" });
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
   const [useHttpFallback, setUseHttpFallback] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -84,30 +84,30 @@ export function SerayahChat() {
     }
   }, []);
 
-  // Fetch Serayah's status from MC API
-  const fetchSerayahStatus = useCallback(async () => {
+  // Fetch Omi's status from MC API
+  const fetchOmiStatus = useCallback(async () => {
     if (!MC_API_URL) return;
     try {
-      const response = await fetch(`${MC_API_URL}/api/v1/agents?name=Serayah`, {
+      const response = await fetch(`${MC_API_URL}/api/v1/agents?name=Omi`, {
         signal: createTimeoutSignal(10000)
       });
       if (response.ok) {
         const data = await response.json();
         const agents = data.items || [];
-        const serayahAgent = agents.find((a: { name: string; is_gateway_main?: boolean }) => 
-          a.name?.toLowerCase().includes("serayah") || a.is_gateway_main
+        const omiAgent = agents.find((a: { name: string; is_gateway_main?: boolean }) => 
+          a.name?.toLowerCase().includes("omi") || a.is_gateway_main
         );
         
-        if (serayahAgent) {
-          setSerayahStatus({
-            status: mapAgentStatus(serayahAgent.status),
-            currentTask: serayahAgent.current_task,
-            lastSeen: serayahAgent.last_seen_at ? new Date(serayahAgent.last_seen_at) : undefined,
+        if (omiAgent) {
+          setOmiStatus({
+            status: mapAgentStatus(omiAgent.status),
+            currentTask: omiAgent.current_task,
+            lastSeen: omiAgent.last_seen_at ? new Date(omiAgent.last_seen_at) : undefined,
           });
         }
       }
     } catch (error) {
-      console.error("Failed to fetch Serayah status:", error);
+      console.error("Failed to fetch Omi status:", error);
     }
   }, []);
 
@@ -116,7 +116,7 @@ export function SerayahChat() {
     if (!MC_API_URL || !isOpen) return;
     try {
       const response = await fetch(
-        `${MC_API_URL}/api/v1/messages?session=agent:serayah:main&after=${lastMessageIdRef.current}`,
+        `${MC_API_URL}/api/v1/messages?session=agent:omi:main&after=${lastMessageIdRef.current}`,
         { signal: createTimeoutSignal(10000) }
       );
       if (response.ok) {
@@ -131,7 +131,7 @@ export function SerayahChat() {
           // Add new messages to chat
           newMessages.forEach((msg: { id: string; content: string; role: string; created_at: string }) => {
             if (msg.role === "assistant") {
-              const assistantMessage: SerayahMessage = {
+              const assistantMessage: OmiMessage = {
                 id: msg.id,
                 role: "assistant",
                 content: msg.content,
@@ -159,7 +159,7 @@ export function SerayahChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          session: "agent:serayah:main",
+          session: "agent:omi:main",
           content,
           role: "user",
         }),
@@ -172,7 +172,7 @@ export function SerayahChat() {
     }
   }, []);
 
-  const mapAgentStatus = (status: string): SerayahStatus["status"] => {
+  const mapAgentStatus = (status: string): OmiStatus["status"] => {
     switch (status) {
       case "online":
       case "active":
@@ -201,14 +201,14 @@ export function SerayahChat() {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       if (messagePollIntervalRef.current) clearInterval(messagePollIntervalRef.current);
       
-      pollIntervalRef.current = setInterval(fetchSerayahStatus, POLL_INTERVAL);
+      pollIntervalRef.current = setInterval(fetchOmiStatus, POLL_INTERVAL);
       messagePollIntervalRef.current = setInterval(pollMessages, MESSAGE_POLL_INTERVAL);
       
       // Initial fetch
-      fetchSerayahStatus();
+      fetchOmiStatus();
       pollMessages();
     }
-  }, [checkHealth, fetchSerayahStatus, pollMessages, useHttpFallback]);
+  }, [checkHealth, fetchOmiStatus, pollMessages, useHttpFallback]);
 
   // Stop HTTP polling
   const stopHttpFallback = useCallback(() => {
@@ -253,8 +253,8 @@ export function SerayahChat() {
       
       // Add session parameter
       const fullWsUrl = wsUrl.includes("?") 
-        ? `${wsUrl}&session=agent:serayah:main` 
-        : `${wsUrl}?session=agent:serayah:main`;
+        ? `${wsUrl}&session=agent:omi:main` 
+        : `${wsUrl}?session=agent:omi:main`;
       
       const ws = new WebSocket(fullWsUrl);
       
@@ -262,13 +262,13 @@ export function SerayahChat() {
         setConnectionState("connected");
         setReconnectAttempt(0);
         setUseHttpFallback(false);
-        setSerayahStatus(prev => ({ ...prev, status: "online" }));
+        setOmiStatus(prev => ({ ...prev, status: "online" }));
         
         // Send connect message
         ws.send(JSON.stringify({
           type: "connect",
           role: "ui",
-          client: { id: "mc-serayah-chat", version: "1.0.0" }
+          client: { id: "mc-omi-chat", version: "1.0.0" }
         }));
         
         // Send any pending message
@@ -287,7 +287,7 @@ export function SerayahChat() {
           handleWsMessage(data);
         } catch {
           // Handle plain text messages
-          const assistantMessage: SerayahMessage = {
+          const assistantMessage: OmiMessage = {
             id: Date.now().toString(),
             role: "assistant",
             content: event.data,
@@ -300,7 +300,7 @@ export function SerayahChat() {
       ws.onclose = (event) => {
         const wasConnected = connectionState === "connected";
         setConnectionState("disconnected");
-        setSerayahStatus(prev => ({ ...prev, status: "offline" }));
+        setOmiStatus(prev => ({ ...prev, status: "offline" }));
         
         // Attempt reconnection if chat is open
         if (isOpen) {
@@ -347,7 +347,7 @@ export function SerayahChat() {
       const payload = msg.payload as Record<string, unknown> | undefined;
       
       if (ev === "chat" && payload?.message) {
-        const assistantMessage: SerayahMessage = {
+        const assistantMessage: OmiMessage = {
           id: Date.now().toString(),
           role: "assistant",
           content: String(payload.message),
@@ -356,14 +356,14 @@ export function SerayahChat() {
         setMessages((prev) => [...prev, assistantMessage]);
       } else if (ev === "presence" && payload?.agent) {
         const agent = payload.agent as Record<string, unknown>;
-        setSerayahStatus({
+        setOmiStatus({
           status: mapAgentStatus(String(agent.status)),
-          currentTask: agent.current_task as SerayahStatus["currentTask"],
+          currentTask: agent.current_task as OmiStatus["currentTask"],
           lastSeen: new Date(),
         });
       }
     } else if (msg.type === "message" && msg.content) {
-      const assistantMessage: SerayahMessage = {
+      const assistantMessage: OmiMessage = {
         id: Date.now().toString(),
         role: "assistant",
         content: String(msg.content),
@@ -374,7 +374,7 @@ export function SerayahChat() {
       const content = typeof msg.result === "string" 
         ? msg.result 
         : JSON.stringify(msg.result, null, 2);
-      const assistantMessage: SerayahMessage = {
+      const assistantMessage: OmiMessage = {
         id: Date.now().toString(),
         role: "assistant",
         content,
@@ -410,7 +410,7 @@ export function SerayahChat() {
   // Effect: Connect when chat opens
   useEffect(() => {
     if (isOpen) {
-      fetchSerayahStatus();
+      fetchOmiStatus();
       if (connectionState === "disconnected" && !useHttpFallback) {
         connect();
       }
@@ -420,7 +420,7 @@ export function SerayahChat() {
         disconnect();
       }
     };
-  }, [isOpen, connect, disconnect, fetchSerayahStatus, connectionState, useHttpFallback]);
+  }, [isOpen, connect, disconnect, fetchOmiStatus, connectionState, useHttpFallback]);
 
   // Effect: Cleanup on unmount
   useEffect(() => {
@@ -433,15 +433,15 @@ export function SerayahChat() {
   useEffect(() => {
     if (!isOpen || !useHttpFallback) return;
     
-    const interval = setInterval(fetchSerayahStatus, POLL_INTERVAL);
+    const interval = setInterval(fetchOmiStatus, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, [isOpen, useHttpFallback, fetchSerayahStatus]);
+  }, [isOpen, useHttpFallback, fetchOmiStatus]);
 
   const sendMessage = useCallback(async () => {
     if (!input.trim()) return;
     
     const content = input.trim();
-    const userMessage: SerayahMessage = {
+    const userMessage: OmiMessage = {
       id: Date.now().toString(),
       role: "user",
       content,
@@ -464,7 +464,7 @@ export function SerayahChat() {
     if (useHttpFallback) {
       const sent = await sendMessageViaHttp(content);
       if (!sent) {
-        const systemMessage: SerayahMessage = {
+        const systemMessage: OmiMessage = {
           id: (Date.now() + 1).toString(),
           role: "system",
           content: "⚠️ Failed to send message. Service may be temporarily unavailable.",
@@ -477,10 +477,10 @@ export function SerayahChat() {
     
     // Store as pending and try to connect
     pendingMessageRef.current = content;
-    const systemMessage: SerayahMessage = {
+    const systemMessage: OmiMessage = {
       id: (Date.now() + 1).toString(),
       role: "system",
-      content: "⏳ Connecting to Serayah...",
+      content: "⏳ Connecting to Omi...",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, systemMessage]);
@@ -494,14 +494,14 @@ export function SerayahChat() {
     }
   };
 
-  // Initial greeting from Serayah
+  // Initial greeting from Omi
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
         {
           id: "greeting",
           role: "assistant",
-          content: "👋 Hello! I'm Serayah, your Mission Control assistant.\n\nI can help you with:\n• Creating and assigning tasks\n• Checking on agent status\n• Managing board workflows\n• Answering questions about your operations\n\nHow can I help you today?",
+          content: "👋 Hello! I'm Omi, your Mission Control assistant.\n\nI can help you with:\n• Creating and assigning tasks\n• Checking on agent status\n• Managing board workflows\n• Answering questions about your operations\n\nHow can I help you today?",
           timestamp: new Date(),
         },
       ]);
@@ -538,10 +538,10 @@ export function SerayahChat() {
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2",
           isOpen && "scale-0 opacity-0 pointer-events-none"
         )}
-        aria-label="Open Serayah chat"
+        aria-label="Open Omi chat"
       >
         <Crown className="h-6 w-6" />
-        {serayahStatus.status === "online" && (
+        {omiStatus.status === "online" && (
           <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white" />
         )}
       </button>
@@ -568,22 +568,22 @@ export function SerayahChat() {
               <span 
                 className={cn(
                   "absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-violet-600",
-                  statusIndicator[serayahStatus.status].color
+                  statusIndicator[omiStatus.status].color
                 )} 
               />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Serayah</h3>
+              <h3 className="font-semibold text-white">Omi</h3>
               <p className="text-xs text-white/70 flex items-center gap-1">
-                {serayahStatus.status === "working" || serayahStatus.status === "busy" ? (
+                {omiStatus.status === "working" || omiStatus.status === "busy" ? (
                   <>
                     <Activity className="h-3 w-3 animate-pulse" />
-                    {serayahStatus.currentTask?.title || "Working on task..."}
+                    {omiStatus.currentTask?.title || "Working on task..."}
                   </>
                 ) : (
                   <>
-                    <span className={cn("h-1.5 w-1.5 rounded-full", statusIndicator[serayahStatus.status].color)} />
-                    {statusIndicator[serayahStatus.status].label}
+                    <span className={cn("h-1.5 w-1.5 rounded-full", statusIndicator[omiStatus.status].color)} />
+                    {statusIndicator[omiStatus.status].label}
                   </>
                 )}
               </p>

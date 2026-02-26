@@ -1,7 +1,7 @@
-"""Serayah Dashboard API routes.
+"""Omi Dashboard API routes.
 
-Provides endpoints for the Serayah Dashboard to view:
-- Tasks created by Serayah (auto_created=true)
+Provides endpoints for the Omi Dashboard to view:
+- Tasks created by Omi (auto_created=true)
 - Task queue (pending assignment)
 - Recent activity
 """
@@ -33,24 +33,24 @@ from app.schemas.tasks import TaskRead
 if TYPE_CHECKING:
     from sqlmodel.ext.asyncio.session import AsyncSession
 
-router = APIRouter(prefix="/serayah", tags=["serayah"])
+router = APIRouter(prefix="/omi", tags=["omi"])
 
 
 @router.get(
     "/tasks",
     response_model=DefaultLimitOffsetPage[TaskRead],
 )
-async def get_serayah_tasks(
+async def get_omi_tasks(
     auto_created: bool | None = Query(default=None, description="Filter by auto-created tasks"),
     status: str | None = Query(default=None, description="Filter by task status"),
     assigned_agent_id: UUID | None = Query(default=None, description="Filter by assigned agent"),
     session: AsyncSession = Depends(get_session),
 ) -> DefaultLimitOffsetPage[TaskRead]:
-    """Get tasks visible in Serayah Dashboard.
+    """Get tasks visible in Omi Dashboard.
     
     Returns tasks that are either:
-    - auto_created by Serayah
-    - Created by agent with Serayah session
+    - auto_created by Omi
+    - Created by agent with Omi session
     """
     # Build base query
     statement = (
@@ -59,7 +59,7 @@ async def get_serayah_tasks(
         .order_by(desc(col(Task.created_at)))
     )
     
-    # Filter for Serayah-created tasks
+    # Filter for Omi-created tasks
     if auto_created is not None:
         statement = statement.where(col(Task.auto_created) == auto_created)
     
@@ -138,11 +138,11 @@ async def get_task_queue(
     "/activity",
     response_model=OkResponse,
 )
-async def get_serayah_activity(
+async def get_omi_activity(
     limit: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
 ) -> OkResponse:
-    """Get recent activity related to Serayah and auto-created tasks."""
+    """Get recent activity related to Omi and auto-created tasks."""
     # Get recent activity events for auto-created tasks
     statement = (
         select(

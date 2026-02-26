@@ -15,7 +15,7 @@ import { BrandMark } from "@/components/atoms/BrandMark";
 import { OrgSwitcher } from "@/components/organisms/OrgSwitcher";
 import { UserMenu } from "@/components/organisms/UserMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { SerayahChat } from "@/components/serayah/SerayahChat";
+import { OmiChat } from "@/components/omi/OmiChat";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { Menu, X, BarChart3, Activity, Folder, LayoutGrid, Tags, CheckCircle2, Settings, Store, Boxes, Building2, Network, Bot, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -156,9 +156,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {children}
       </div>
       
-      {/* Serayah AI Chat - only shown when signed in */}
+      {/* Omi AI Chat - only shown when signed in */}
       <SignedIn>
-        <SerayahChat />
+        <OmiChat />
       </SignedIn>
     </div>
   );
@@ -184,9 +184,9 @@ function MobileNavigation({ pathname, onClose }: { pathname: string; onClose: ()
                 <BarChart3 className="h-4 w-4" />
                 Dashboard
               </MobileNavLink>
-              <MobileNavLink href="/dashboard/serayah" pathname={pathname} onClick={onClose}>
+              <MobileNavLink href="/dashboard/omi" pathname={pathname} onClick={onClose}>
                 <Crown className="h-4 w-4" />
-                Serayah
+                Omi
               </MobileNavLink>
               <MobileNavLink href="/activity" pathname={pathname} onClick={onClose}>
                 <Activity className="h-4 w-4" />

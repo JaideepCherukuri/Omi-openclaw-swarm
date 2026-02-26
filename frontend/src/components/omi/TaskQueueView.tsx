@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { StatusPill } from "@/components/atoms/StatusPill";
 import { cn } from "@/lib/utils";
-import { useSerayahQueue } from "@/hooks/useSerayahTasks";
+import { useOmiQueue } from "@/hooks/useOmiTasks";
 import type { TaskRead } from "@/api/generated/model/taskRead";
 
 // Extended task with agent name
@@ -224,7 +224,7 @@ function QueueTaskItem({
 
 // Main queue view
 export function TaskQueueView({ className }: { className?: string }) {
-  const { data, isLoading, isError, refetch } = useSerayahQueue();
+  const { data, isLoading, isError, refetch } = useOmiQueue();
 
   const [expandedSections, setExpandedSections] = useState({
     pending: true,

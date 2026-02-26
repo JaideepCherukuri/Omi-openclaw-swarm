@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { StatusPill } from "@/components/atoms/StatusPill";
 import { cn } from "@/lib/utils";
-import { useSerayahDashboard } from "@/hooks/useSerayahTasks";
+import { useOmiDashboard } from "@/hooks/useOmiTasks";
 import type { TaskRead } from "@/api/generated/model/taskRead";
 import type { ActivityEventRead } from "@/api/generated/model/activityEventRead";
 
@@ -234,9 +234,9 @@ function QuickActionButton({
 }
 
 // Main dashboard component
-export function SerayahDashboard({ className }: { className?: string }) {
+export function OmiDashboard({ className }: { className?: string }) {
   const { tasks, queue, activity, agents, isLoading, isError, refetch } =
-    useSerayahDashboard();
+    useOmiDashboard();
   const [showCreateTask, setShowCreateTask] = useState(false);
 
   const tasksData = tasks.data?.items ?? [];
@@ -261,7 +261,7 @@ export function SerayahDashboard({ className }: { className?: string }) {
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-muted">
-              Failed to load Serayah dashboard
+              Failed to load Omi dashboard
             </p>
             <Button variant="outline" onClick={refetch} className="mt-4">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -403,7 +403,7 @@ export function SerayahDashboard({ className }: { className?: string }) {
                   Tasks I Created
                 </h3>
                 <p className="text-sm text-muted mt-1">
-                  Tasks auto-created by Serayah
+                  Tasks auto-created by Omi
                 </p>
               </div>
               <Badge variant="outline">{tasksData.length} total</Badge>

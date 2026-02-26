@@ -19,8 +19,8 @@ import { DashboardShell } from "@/components/templates/DashboardShell";
 import { DashboardSidebar } from "@/components/organisms/DashboardSidebar";
 import { SignedOutPanel } from "@/components/auth/SignedOutPanel";
 import { SignedIn, SignedOut, useAuth } from "@/auth/clerk";
-import { SerayahDashboard } from "@/components/serayah/SerayahDashboard";
-import { TaskQueueView } from "@/components/serayah/TaskQueueView";
+import { OmiDashboard } from "@/components/omi/OmiDashboard";
+import { TaskQueueView } from "@/components/omi/TaskQueueView";
 
 // Loading fallback
 function LoadingState() {
@@ -55,7 +55,7 @@ function LoadingState() {
 }
 
 // Main page content
-function SerayahDashboardPageContent() {
+function OmiDashboardPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [refreshing, setRefreshing] = useState(false);
@@ -97,7 +97,7 @@ function SerayahDashboardPageContent() {
                     <Sparkles className="h-4 w-4 text-white" />
                   </div>
                   <h1 className="font-heading text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                    Serayah Dashboard
+                    Omi Dashboard
                   </h1>
                 </div>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -157,7 +157,7 @@ function SerayahDashboardPageContent() {
 
             <TabsContent value="overview" className="mt-6">
               <Suspense fallback={<LoadingState />}>
-                <SerayahDashboard />
+                <OmiDashboard />
               </Suspense>
             </TabsContent>
 
@@ -174,18 +174,18 @@ function SerayahDashboardPageContent() {
 }
 
 // Export default page component
-export default function SerayahDashboardPage() {
+export default function OmiDashboardPage() {
   return (
     <DashboardShell>
       <SignedOut>
         <SignedOutPanel
-          message="Sign in to access the Serayah dashboard."
+          message="Sign in to access the Omi dashboard."
           forceRedirectUrl="/onboarding"
           signUpForceRedirectUrl="/onboarding"
         />
       </SignedOut>
       <SignedIn>
-        <SerayahDashboardPageContent />
+        <OmiDashboardPageContent />
       </SignedIn>
     </DashboardShell>
   );

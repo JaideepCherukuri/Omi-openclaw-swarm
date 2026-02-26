@@ -6,96 +6,96 @@ import type { TaskRead } from "@/api/generated/model/taskRead";
 import type { AgentRead } from "@/api/generated/model/agentRead";
 import type { ActivityEventRead } from "@/api/generated/model/activityEventRead";
 
-// Types for Serayah API responses
-interface SerayahTasksResponse {
+// Types for Omi API responses
+interface OmiTasksResponse {
   items: TaskRead[];
   total: number;
 }
 
-interface SerayahQueueResponse {
+interface OmiQueueResponse {
   pending: TaskRead[];
   assigned: (TaskRead & { agent_name?: string })[];
   in_progress: (TaskRead & { agent_name?: string })[];
 }
 
-interface SerayahActivityResponse {
+interface OmiActivityResponse {
   items: ActivityEventRead[];
   total: number;
 }
 
-interface SerayahAgentStatusResponse {
+interface OmiAgentStatusResponse {
   items: (AgentRead & { task_count?: number; current_task?: string | null })[];
   total: number;
 }
 
 // Fetch functions
-const fetchSerayahTasks = async (): Promise<SerayahTasksResponse> => {
-  return customFetch<SerayahTasksResponse>("/api/v1/serayah/tasks", {
+const fetchOmiTasks = async (): Promise<OmiTasksResponse> => {
+  return customFetch<OmiTasksResponse>("/api/v1/omi/tasks", {
     method: "GET",
   });
 };
 
-const fetchSerayahQueue = async (): Promise<SerayahQueueResponse> => {
-  return customFetch<SerayahQueueResponse>("/api/v1/serayah/queue", {
+const fetchOmiQueue = async (): Promise<OmiQueueResponse> => {
+  return customFetch<OmiQueueResponse>("/api/v1/omi/queue", {
     method: "GET",
   });
 };
 
-const fetchSerayahActivity = async (): Promise<SerayahActivityResponse> => {
-  return customFetch<SerayahActivityResponse>("/api/v1/serayah/activity", {
+const fetchOmiActivity = async (): Promise<OmiActivityResponse> => {
+  return customFetch<OmiActivityResponse>("/api/v1/omi/activity", {
     method: "GET",
   });
 };
 
-const fetchSerayahAgentStatus = async (): Promise<SerayahAgentStatusResponse> => {
-  return customFetch<SerayahAgentStatusResponse>("/api/v1/serayah/agent-status", {
+const fetchOmiAgentStatus = async (): Promise<OmiAgentStatusResponse> => {
+  return customFetch<OmiAgentStatusResponse>("/api/v1/omi/agent-status", {
     method: "GET",
   });
 };
 
 // React Query hooks
-export function useSerayahTasks(enabled = true) {
+export function useOmiTasks(enabled = true) {
   return useQuery({
-    queryKey: ["serayah", "tasks"],
-    queryFn: fetchSerayahTasks,
+    queryKey: ["omi", "tasks"],
+    queryFn: fetchOmiTasks,
     enabled,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 }
 
-export function useSerayahQueue(enabled = true) {
+export function useOmiQueue(enabled = true) {
   return useQuery({
-    queryKey: ["serayah", "queue"],
-    queryFn: fetchSerayahQueue,
+    queryKey: ["omi", "queue"],
+    queryFn: fetchOmiQueue,
     enabled,
     refetchInterval: 15000, // Refresh every 15 seconds for queue
   });
 }
 
-export function useSerayahActivity(enabled = true) {
+export function useOmiActivity(enabled = true) {
   return useQuery({
-    queryKey: ["serayah", "activity"],
-    queryFn: fetchSerayahActivity,
+    queryKey: ["omi", "activity"],
+    queryFn: fetchOmiActivity,
     enabled,
     refetchInterval: 20000, // Refresh every 20 seconds
   });
 }
 
-export function useSerayahAgentStatus(enabled = true) {
+export function useOmiAgentStatus(enabled = true) {
   return useQuery({
-    queryKey: ["serayah", "agent-status"],
-    queryFn: fetchSerayahAgentStatus,
+    queryKey: ["omi", "agent-status"],
+    queryFn: fetchOmiAgentStatus,
     enabled,
     refetchInterval: 10000, // Refresh every 10 seconds for agent status
   });
 }
 
 // Combined hook for dashboard
-export function useSerayahDashboard() {
-  const tasks = useSerayahTasks();
-  const queue = useSerayahQueue();
-  const activity = useSerayahActivity();
-  const agents = useSerayahAgentStatus();
+export function useOmiDashboard() {
+  const tasks = useOmiTasks();
+  const queue = useOmiQueue();
+  const activity = useOmiActivity();
+  const agents = useOmiAgentStatus();
 
   return {
     tasks,

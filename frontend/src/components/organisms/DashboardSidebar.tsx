@@ -74,9 +74,9 @@ export function DashboardSidebar() {
                 <BarChart3 className="h-4 w-4" />
                 Dashboard
               </NavLink>
-              <NavLink href="/dashboard/serayah" pathname={pathname}>
+              <NavLink href="/dashboard/omi" pathname={pathname}>
                 <Crown className="h-4 w-4" />
-                Serayah
+                Omi
               </NavLink>
               <NavLink href="/activity" pathname={pathname}>
                 <Activity className="h-4 w-4" />

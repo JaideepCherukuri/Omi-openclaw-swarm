@@ -309,7 +309,7 @@ export function AgentActivityFeed() {
         params.append("hours", "24");
         
         const response = await customFetch<{ logs: AgentLog[]; count: number }>(
-          `/api/v1/serayah/agent-logs?${params.toString()}`,
+          `/api/v1/omi/agent-logs?${params.toString()}`,
           { method: "GET" }
         );
         

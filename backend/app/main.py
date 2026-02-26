@@ -23,7 +23,7 @@ from app.api.board_onboarding import router as board_onboarding_router
 from app.api.board_webhooks import router as board_webhooks_router
 from app.api.boards import router as boards_router
 from app.api.gateway import router as gateway_router
-from app.api.serayah import router as serayah_router
+from app.api.omi import router as omi_router
 from app.api.gateway_callbacks import router as gateway_callbacks_router
 from app.api.gateways import router as gateways_router
 from app.api.metrics import router as metrics_router
@@ -136,8 +136,8 @@ OPENAPI_TAGS = [
         "description": "User profile read/update operations and user-centric settings endpoints.",
     },
     {
-        "name": "serayah",
-        "description": "Serayah dashboard endpoints for viewing auto-created tasks, task queue, agent status, and activity.",
+        "name": "omi",
+        "description": "Omi dashboard endpoints for viewing auto-created tasks, task queue, agent status, and activity.",
     },
     {
         "name": "agent",
@@ -190,7 +190,7 @@ _OPENAPI_EXAMPLE_TAGS = {
     "custom-fields",
     "tags",
     "users",
-    "serayah",
+    "omi",
 }
 _GENERIC_RESPONSE_DESCRIPTIONS = {"Successful Response", "Validation Error"}
 _HTTP_RESPONSE_DESCRIPTIONS = {
@@ -655,7 +655,7 @@ api_v1.include_router(tasks_router)
 api_v1.include_router(task_custom_fields_router)
 api_v1.include_router(tags_router)
 api_v1.include_router(users_router)
-api_v1.include_router(serayah_router)
+api_v1.include_router(omi_router)
 app.include_router(api_v1)
 
 add_pagination(app)

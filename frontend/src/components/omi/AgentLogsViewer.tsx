@@ -66,7 +66,7 @@ async function fetchLogs(
   params.append("hours", "24");
   
   const response = await customFetch<FetchResponse<LogsResponse>>(
-    `/api/v1/serayah/agent-logs?${params.toString()}`,
+    `/api/v1/omi/agent-logs?${params.toString()}`,
     { method: "GET" }
   );
   
@@ -79,7 +79,7 @@ async function fetchLogs(
 
 // Clear logs via API
 async function clearLogsApi(): Promise<void> {
-  await customFetch("/api/v1/serayah/agent-logs/clear", { method: "POST" });
+  await customFetch("/api/v1/omi/agent-logs/clear", { method: "POST" });
 }
 
 // Single log entry component

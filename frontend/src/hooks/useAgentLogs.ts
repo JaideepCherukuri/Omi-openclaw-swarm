@@ -42,7 +42,7 @@ const fetchAgentLogs = async (
   params.append("limit", limit.toString());
 
   const response = await customFetch<AgentLogsResponse>(
-    `/api/v1/serayah/agent-logs?${params.toString()}`,
+    `/api/v1/omi/agent-logs?${params.toString()}`,
     { method: "GET" }
   );
 
