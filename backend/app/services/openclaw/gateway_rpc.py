@@ -406,7 +406,7 @@ async def _openclaw_call_once(
     connect_kwargs: dict[str, Any] = {"ping_interval": None}
     if origin is not None:
         connect_kwargs["origin"] = origin
-    async with websockets.connect(gateway_url, ssl=ssl_context, **connect_kwargs) as ws:
+    async with websockets.connect(gateway_url, ssl=True if ssl_context is None and gateway_url.startswith('wss://') else ssl_context, **connect_kwargs) as ws:
         first_message = await _recv_first_message_or_none(ws)
         await _ensure_connected(ws, first_message, config)
         return await _send_request(ws, method, params)
@@ -422,7 +422,7 @@ async def _openclaw_connect_metadata_once(
     connect_kwargs: dict[str, Any] = {"ping_interval": None}
     if origin is not None:
         connect_kwargs["origin"] = origin
-    async with websockets.connect(gateway_url, ssl=ssl_context, **connect_kwargs) as ws:
+    async with websockets.connect(gateway_url, ssl=True if ssl_context is None and gateway_url.startswith('wss://') else ssl_context, **connect_kwargs) as ws:
         first_message = await _recv_first_message_or_none(ws)
         return await _ensure_connected(ws, first_message, config)
 

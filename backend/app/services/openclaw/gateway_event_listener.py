@@ -130,7 +130,7 @@ class GatewayEventListener:
 
         async with websockets.connect(
             self.config.gateway_url,
-            ssl=ssl_context,
+            ssl=True if ssl_context is None and gateway_url.startswith('wss://') else ssl_context,
             **connect_kwargs,
         ) as ws:
             self._ws = ws
